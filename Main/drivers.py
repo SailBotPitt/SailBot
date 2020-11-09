@@ -12,6 +12,9 @@ class obj_sail:
             
     angle_min = c.SAIL_ANGLE_MIN
     angle_max = c.SAIL_ANGLE_MAX
+
+    sailPosition = 0 #Keeps track of current sail position
+    
             
     def __init__(self, pca, channel_index, auto):
         self.channel =  pca.channels[channel_index]
@@ -30,6 +33,7 @@ class obj_sail:
                   self.servo_min, self.servo_max)
 
         self.channel.duty_cycle = int(val)
+        sailPosition = degrees
         return
     
     def autoAdjustSail(self):
@@ -41,6 +45,10 @@ class obj_sail:
                 targetAngle = max(min(windDir / 2, 90), 3)
                 self.set(targetAngle)
 
+    def get(self):
+        return sailPosition
+
+
                 
 class obj_rudder:
             
@@ -51,6 +59,8 @@ class obj_rudder:
     angle_min = c.RUDDER_ANGLE_MIN
     angle_max = c.RUDDER_ANGLE_MAX
     angle_ctr = angle_min + (angle_max - angle_min) / 2
+
+    rudderPosition = 0 #Will keep the current position of rudder
             
     def __init__(self, pca, channel_index):
         self.channel =  pca.channels[channel_index]
@@ -70,7 +80,11 @@ class obj_rudder:
 
 
         self.channel.duty_cycle = int(val)
+        rudderPosition = degrees
         return
+
+    def get(self):
+        return rudderPosition
 
 class driver:
 

@@ -88,6 +88,19 @@ class boat:
                 elif ary[0] == 'rudder': self.drivers.rudder.set(float(ary[1]))
                 elif ary[0] == 'mode': print("TODO: add Modes")
 
+    def sendMessagesToGui(self):
+        #Gps data
+        coordinates = self.gps.getCoordinates()
+        arduino.send(coordinates)
+
+        #Rudder data
+        rudd_position = "rudder_pos " + str(self.drivers.rudder.get())
+        arduino.send(rudd_position)
+
+        #Sail Position
+        sail_position = "sail_pos " + str(self.drivers.sail.get())
+        arduino.send(sail_position)
+
 if __name__ == "__main__":
 
     boat()

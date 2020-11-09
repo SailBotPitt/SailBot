@@ -11,6 +11,7 @@ except:
 from time import sleep
 from threading import Thread
 import math
+from transceiver import arduino
 
 
  
@@ -76,6 +77,13 @@ def convertDegMinToDecDeg (degMin):
     decDeg = degMin + (min/60)
     
     return decDeg
+
+def getCoordinates ():
+    latitude = self.gps.latitude
+    longitude = self.gps.longitude
+
+    data = "gps (" + str(latitude) + ", " + str(longitude) + ")"
+    return data
 
 class gps():
 
