@@ -122,6 +122,7 @@ class boat:
             # move sail to home position
             self.drivers.sail.set(0)
             self.currentSail = 0
+            #test
             logging.info('Adjusted sail to home position')
 
     def adjustRudder(self, angleTo):
