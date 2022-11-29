@@ -178,10 +178,13 @@ class events(boat):
             #(10,11)Back-line
             #(12) mid m line for line check
 
-        start = True; moving = False
+        start = True#; moving = False
+        targ_x = None; targ_y = None
+            #gotoGPS just sets it on course, not till it goes there
         #=== main running ===
         #line check is a long process, so instead of checking both
-        #uses mutual exclusion so not continiously moving to same point (moving bool)
+        #DEPRICATED:uses mutual exclusion so not continiously moving to same point (moving bool)
+            #gotoGPS just sets it on course, not till it goes there
 
         #time calc
         start_time = time.time()
@@ -191,50 +194,41 @@ class events(boat):
             curr_time = time.time()
             if curr_time - start_time >= time_perc:
                 #find best point to leave:
-                    #see what mid point closest (Left,Back,Right)
-                    #cartesian with rand radius
-                        #find point at perimeter at -45 or 125 (left,right) degrees (LDeg,RDeg line)
-                        #find m/b of both
-                        #x = r × cos( θ )
-                        #y = r × sin( θ );  r=5(doesnt matter)
-                    #take I() of LDeg,LSide; LDeg,BSide; RDeg,RSide; RDeg,BSide
-                        #find closest, sail to
-                targ_x, targ_y = self.cart_perimiter_scan(cool_arr[-7:-1])    #i thought the name sounded cool
+                if targ_x == None: targ_x, targ_y = self.cart_perimiter_scan(cool_arr[-7:-1])    #i thought the name sounded cool
 
                 #TODO: when to stop????
                     #using past line depending
                     #using side/back-line that the shortest on intersected at and using SK_line_check with front instead of back
                         #return another var in cart_perimiter_scan, str, ("B","L","R")
                         #or si (var from cart_perimiter_scan)
-                    #[!!!!!]might also just not have too as: as soon as you leav after the timelimit, the event is over and we can switch to manual
+                    #maybe break to go to another loop after this one, checking it doesnt crash?
+                    #[!!!!!]might also just not have too as: as soon as you leave after the timelimit, the event is over and we can switch to manual
                 boat.goToGPS(targ_x,targ_y)
                 '''
                 stall = False
                 while(not self.SK_line_check(uhh_idk_something)): stall=True
                 '''
-                return #maybe break to go to another loop after this one, checking it doesnt crash?
-            #del curr_time
             if self.event_NL(): return  #checks if mode has switched, exits func if so
 
 
             #beginning set up
-            if start and not(moving):
+            if start: #and not(moving):
                 #if not moving and behind 80%
                 if self.SK_line_check(cool_arr[0:1], cool_arr[-3:]):
-                    start = False; moving = True
+                    start = False; #moving = True
                     boat.goToGPS(cool_arr[6],cool_arr[7])  #go to 90
 
             #majority sail
-            elif not(start) and not(moving):
+            elif not(start): #and not(moving):
                 #if not moving and behind 75% and sail back
                 if self.SK_line_check(cool_arr[2:3], cool_arr[-3:]):
-                    moving = True
+                    #moving = True
                     boat.goToGPS(cool_arr[6],cool_arr[7])  #go to 90
             
-            #if past or at 90% (redundence reduction)
-            elif not(self.SK_line_check(cool_arr[4:5], cool_arr[-3:])):
-                moving = False
-                boat.adjustSail(90)  #loosen sail, do nuthin
+                #if past or at 90% (redundence reduction)
+                elif not(self.SK_line_check(cool_arr[4:5], cool_arr[-3:])):
+                    #moving = False
+                    boat.adjustSail(90)  #loosen sail, do nuthin
 
     #give %-line of box and other lines(details in SK)
     def SK_perc_guide(self,inp_arr,type_arr,buoy_arr):
@@ -359,9 +353,18 @@ class events(boat):
     
     #find best point of run to leave box
     def cart_perimiter_scan(self,arr):
-        #arr: back-line,left-line,right-line (m,b's) 01,23,45
+        #see what mid point closest (Left,Back,Right)
+            #cartesian with rand radius
+                #find point at perimeter at -45 or 125 (left,right) degrees (LDeg,RDeg line)
+                #find m/b of both
+                #x = r × cos( θ )
+                #y = r × sin( θ );  r=5(doesnt matter)
+            #take I() of LDeg,LSide; LDeg,BSide; RDeg,RSide; RDeg,BSide
+                #find closest, sail to
 
+        #arr: back-line,left-line,right-line (m,b's) 01,23,45
             #find x,y's of degrees at best run points left and right
+            
         gps.updategps()
         lat = boat.gps.latitude, long=boat.gps.longitude
         t = math.pi/180
