@@ -8,7 +8,7 @@ from random import randint
 class virtualBoat(boatMain.boat):
     def __init__(self):
         self.currentTarget = None
-        self.manualControl = True
+        self.manualControl = False
         self.cycleTargets = False
         self.compass = virtualCompass(self)
         self.gps = virtualGPS()
@@ -208,9 +208,9 @@ def drawBoat():
 
         if BOAT.windvane.angle < BOAT.windvane.noGoMin and BOAT.windvane.angle > BOAT.windvane.noGoMax:
 
-            BOAT.vel = min(.05, BOAT.vel + .001) * max((1 -  abs(BOAT.drivers.sail.angle - optAngle)/30), 0)
+            BOAT.vel = min(.05, BOAT.vel + .001) * max((1 -  abs(BOAT.drivers.sail.angle - optAngle)/3000), 0)
         else:
-            BOAT.vel = max(BOAT.vel - .0001, 0) * max((1 -  abs(BOAT.drivers.sail.angle - optAngle)/30), 0)
+            BOAT.vel = max(BOAT.vel - .0001, 0) * max((1 -  abs(BOAT.drivers.sail.angle - optAngle)/3000), 0)
 
         BOAT.gps.latitude = nx
         BOAT.gps.longitude = ny

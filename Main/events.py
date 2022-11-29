@@ -1,6 +1,7 @@
 import constants as c
 import logging
 import math
+import time
 
 try:
     from windvane import windVane
@@ -8,10 +9,10 @@ try:
     from compass import compass
     import GPS
     from camera import camera
-
+    from boatMath import getCoordinateADistanceAlongAngle
     from drivers import driver
     from transceiver import arduino
-
+    import constants
     from boatMain import boat
 except Exception as e:
     print("Failed to import some modules, if this is not a simulation fix this before continuing")
@@ -27,9 +28,9 @@ class events(boat):
     def __init__(self):
         self.MESSAGE = None
         print("init")
-        totalError = 0.0
-        oldError = 0.0
-        oldTime = time.time()
+        self.totalError = 0.0
+        self.oldError = 0.0
+        self.oldTime = time.time()
 
 
     def event_NL(self):
@@ -65,20 +66,20 @@ class events(boat):
         boat.sendData()
 
         # New PID stuff
-        if (time.time() - oldTime < 100):  # Only runs every tenth of a second #new
+        if (time.time() - self.oldTime < 100):  # Only runs every tenth of a second
             # Finds the angle the boat should take
             error = boat.targetAngle - boat.compass.angle  # Finds how far off the boat is from its goal
-            totalError += error  # Gets the total error to be used for the integral gain
-            derivativeError = (error - oldError) / (
-                        time.time() - oldtime)  # Gets the change in error for the derivative portion
-            deltaAngle = P * error + I * totalError + D * derivativeError  # Finds the angle the boat should be going
+            self.totalError += error  # Gets the total error to be used for the integral gain
+            derivativeError = (error - self.oldError) / (
+                        time.time() - self.oldtime)  # Gets the change in error for the derivative portion
+            deltaAngle = constants.P * error + constants.I * self.totalError + constants.D * derivativeError  # Finds the angle the boat should be going
 
             # Translates the angle into lat and log so goToGPS won't ignore it
             boat.currentAngle = getCoordinateADistanceAlongAngle(1000, deltaAngle + boat.compass.angle)
 
             # Resets the variable
-            oldTime = time.time()
-            oldError = error
+            self.oldTime = time.time()
+            self.oldError = error
 
 
         return ret
