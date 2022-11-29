@@ -1,12 +1,14 @@
+from curses import KEY_B2
 import constants as c
 import logging
 import math
+import time
 
 try:
     from windvane import windVane
     from GPS import gps
     from compass import compass
-    import GPS
+    #import GPS
     from camera import camera
 
     from drivers import driver
@@ -26,10 +28,8 @@ class events(boat):
 
     def __init__(self):
         self.MESSAGE = None
+
         print("init")
-        totalError = 0.0
-        oldError = 0.0
-        oldTime = time.time()
 
 
     def event_NL(self):
@@ -64,23 +64,6 @@ class events(boat):
         # SEND MESSAGE SECTION =========
         boat.sendData()
 
-        # New PID stuff
-        if (time.time() - oldTime < 100):  # Only runs every tenth of a second #new
-            # Finds the angle the boat should take
-            error = boat.targetAngle - boat.compass.angle  # Finds how far off the boat is from its goal
-            totalError += error  # Gets the total error to be used for the integral gain
-            derivativeError = (error - oldError) / (
-                        time.time() - oldtime)  # Gets the change in error for the derivative portion
-            deltaAngle = P * error + I * totalError + D * derivativeError  # Finds the angle the boat should be going
-
-            # Translates the angle into lat and log so goToGPS won't ignore it
-            boat.currentAngle = getCoordinateADistanceAlongAngle(1000, deltaAngle + boat.compass.angle)
-
-            # Resets the variable
-            oldTime = time.time()
-            oldError = error
-
-
         return ret
 
 
@@ -106,26 +89,49 @@ class events(boat):
         #self.sendData() to export data
 
     #inputs: B1,B2,B3,B4 long/lat
-    #arr: [B1x,B1y, etc]
-    def Collision_Avoidance(self,arr):
+    #arr: [B1x,B1y, etc] (boat.event_arr)
+    def Collision_Avoidance(self):
         print("Collision_Avoidance moment")
 
-        if self.event_NL(): return
+        while(True):
+            #main running
+                #blah blah blah
+
+
+            if self.event_NL(): return  #checks if mode has switched, exits func if so
+
+
 
     #inputs: B1,B2,B3,B4 long/lat
-    #arr: [B1x,B1y, etc]
-    def Percision_Navigation(self,arr):
+    #arr: [B1x,B1y, etc] (boat.event_arr)
+    def Percision_Navigation(self):
         print("Percision_Navigation moment")
 
-        if self.event_NL(): return
+        while(True):
+            #main running
+                #blah blah blah
+
+
+            if self.event_NL(): return  #checks if mode has switched, exits func if so
+
+
 
     #inputs: B1,B2,B3,B4 long/lat
-    #arr: [B1x,B1y, etc]
-    def Endurance(self,arr):
+    #arr: [B1x,B1y, etc] (boat.event_arr)
+    def Endurance(self):
         print("Endurance moment")
+        
+        gps.updategps()
+        print(gps.latitude)
 
-        if self.event_NL(): return
+        while(True):
+            #main running
+                #blah blah blah
 
+
+            if self.event_NL(): return  #checks if mode has switched, exits func if so
+
+<<<<<<< Updated upstream
     #inputs: B1,B2 long/lat
     #arr: [B1x,B1y, etc]
     def Station_Keeping(self,arr):
@@ -181,6 +187,66 @@ class events(boat):
         #time calc
         start_time = time.time()
 
+=======
+
+
+    #inputs: B1,B2,B3,B4 long/lat
+    #TL,TR,BL,BR
+    #arr: [B1x,B1y, etc] (boat.event_arr)
+    def Station_Keeping(self):          #Jonah
+        print("Station_Keeping moment")
+        #Challenge	Goal:
+            #To	demonstrate	the	ability	of the boat to remain close to one position and respond to time-based commands.	
+        #Description:
+            #The boat will enter a 40 x 40m box and attempt to stay inside the box for 5 minutes.
+            #It must then exit within 30 seconds to avoid a penalty.
+        #Scoring:
+            #10	pts	max.
+            #2 pts per minute within the box during the 5 minute test (the boat may exit and reenter multiple times).
+            #2 pts per minute will be deducted for time within the box after 5½ minutes.	
+            #The final score will be reduced by 50% if any RC is preformed from the start of the 5 minute event	until the boat’s final exit.
+            #The final score will be to X.X precision
+        #assumptions: (based on guidelines)
+            #front is upstream
+
+
+        #see SK_perc_guide() notes on calculating go-to points
+        #running:
+        #1.) wait till fall behind 80%
+        #2.) sail to 90%, until at 90%
+        #3.) set sail flat
+        #4.) if behind 75%, go to step 2, repeat
+        #5.) GTFO (find&sail to best point) after time limit
+            #DO NOT JUST DROP SAIL
+                #how we won event first time was dropping sail
+                #and floating from front to end for total of 5 minute duration travel
+        time_perc = 5*60 * (70/100) #time to leave, 5 minute limit * %
+
+
+        type_arr =   [ 0, 0, 0, 1]
+        wanted_arr = [80,75,90,90]
+        cool_arr = self.SK_perc_guide(wanted_arr,type_arr,boat.event_arr)
+        del type_arr, wanted_arr
+            #(0,1)80-line,      (2,3)75-line,
+            #(4,5)90-line,      (6,7)90-point,
+
+            #[always auto put on end]:
+            #(8,9)Left-line,  (10,11)Right-line
+            #(10,11)Back-line
+            #(12) mid m line for line check
+
+        start = True#; moving = False
+        targ_x = None; targ_y = None
+            #gotoGPS just sets it on course, not till it goes there
+        #=== main running ===
+        #line check is a long process, so instead of checking both
+        #DEPRICATED:uses mutual exclusion so not continiously moving to same point (moving bool)
+            #gotoGPS just sets it on course, not till it goes there
+
+        #time calc
+        start_time = time.time()
+
+>>>>>>> Stashed changes
         while(True):
             #return checks
             curr_time = time.time()
@@ -402,17 +468,24 @@ class events(boat):
 
     #inputs: B1 long/lat, Radius (boat.event_arr)
     def Search(self):
+<<<<<<< Updated upstream
     #inputs: B1 long/lat, Radius
     def Search(self,arr):
+=======
+>>>>>>> Stashed changes
         #make in boatMain along with mode switch, attach buoy coords and radius in ary
         #will need to redo GUI then ://////
-        while(True):
-            self.search_pattern(boat.gps.latitude, boat.gps.longitude, arr[0], arr[1], arr[2])
+        arr = self.SR_pattern(boat.gps.latitude, boat.gps.longitude, boat.event_arr[0], boat.event_arr[1], boat.event_arr[2])
 
-            if self.event_NL(): return
+        while(True):
+            #main running
+                #blah blah blah
+
+
+            if self.event_NL(): return  #checks if mode has switched, exits func if so
         
     
-    def search_pattern(self, gps_lat, gps_long, buoy_lat, buoy_long, radius):
+    def SR_pattern(self, gps_lat, gps_long, buoy_lat, buoy_long, radius):
         #find five coords via search pattern
         #in realtion to current pos and buoy rad center pos
 
