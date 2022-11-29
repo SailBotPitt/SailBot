@@ -546,7 +546,7 @@ class tabWidget(QWidget):
 
         names = ['Buoy x1', 'Buoy y1', 'Buoy x2', 'Buoy y2', 'Buoy x3', 'Buoy y3', 'Buoy x4', 'Buoy y4']
         self.CA_BX = []
-        self.CA_BX = ArrLineEdit(self.tab_CA,len(names),names)
+        self.CA_BX = ArrLineEdit(self.tab_CA,8,names)
         #ArrName(self.tab_CA,8,names)
 
         self.tab_CA.setLayout(self.tab_CA.layout)
@@ -557,7 +557,7 @@ class tabWidget(QWidget):
         self.tab_PN.layout = QGridLayout(self)
 
         names = ['Buoy x1', 'Buoy y1', 'Buoy x2', 'Buoy y2', 'Buoy x3', 'Buoy y3', 'Buoy x4', 'Buoy y4']
-        self.PN_BX = ArrLineEdit(self.tab_PN,len(names),names)
+        self.PN_BX = ArrLineEdit(self.tab_PN,8,names)
 
         self.tab_PN.setLayout(self.tab_PN.layout)
 
@@ -567,7 +567,7 @@ class tabWidget(QWidget):
         self.tab_EN.layout = QGridLayout(self)
 
         names = ['Buoy x1', 'Buoy y1', 'Buoy x2', 'Buoy y2', 'Buoy x3', 'Buoy y3', 'Buoy x4', 'Buoy y4']
-        self.EN_BX = ArrLineEdit(self.tab_EN,len(names),names)
+        self.EN_BX = ArrLineEdit(self.tab_EN,8,names)
 
 
         self.tab_EN.setLayout(self.tab_EN.layout)
@@ -577,8 +577,8 @@ class tabWidget(QWidget):
         self.tab_EVENTS.addTab(self.tab_SK, "Stat Keep")
         self.tab_SK.layout = QGridLayout(self)
 
-        names = ['Buoy x1', 'Buoy y1', 'Buoy x2', 'Buoy y2', 'Buoy x3', 'Buoy y3', 'Buoy x4', 'Buoy y4']
-        self.SK_BX = ArrLineEdit(self.tab_SK,len(names),names)
+        names = ['Buoy x1', 'Buoy y1', 'Buoy x2', 'Buoy y2']
+        self.SK_BX = ArrLineEdit(self.tab_SK,4,names)
 
 
         self.tab_SK.setLayout(self.tab_SK.layout)
@@ -589,7 +589,7 @@ class tabWidget(QWidget):
         self.tab_SR.layout = QGridLayout(self)
 
         names = ['Buoy x', 'Buoy y', 'radius']
-        self.SR_BX = ArrLineEdit(self.tab_SR,len(names),names)
+        self.SR_BX = ArrLineEdit(self.tab_SR,3,names)
 
 
         self.tab_SR.setLayout(self.tab_SR.layout)
