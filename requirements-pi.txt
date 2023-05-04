@@ -5,7 +5,7 @@ numpy==1.24.3
 opencv-python==4.7.0.72
 Pillow==9.5.0
 pygame==2.4.0
-torch==1.12.0  # Required otherwise Pi throws "Illegal instruction" error
+torch==1.13.1  # Required otherwise Pi throws "Illegal instruction" error
 torchvision==0.13.0
 ultralytics==8.0.90
 pytest~=7.3.1
