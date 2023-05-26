@@ -4,10 +4,7 @@ hadles turning motors using Odrive/Stepper driver
 
 import board
 import busio
-#import adafruit_pca9685 as pcaLib
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
+#import adafruit_pca9685 as pcaLibf
 try:
     import constants as c
     import stepper
@@ -20,7 +17,7 @@ except:
     from sailbot.windvane import windVane
 
 from threading import Thread
-from RPi import GPIO
+from RPi import GPIOs
 from time import sleep
 
 
@@ -128,7 +125,7 @@ class obj_rudder:
 
         self.current = degrees
 
-class driver(Node):
+class driver():
 
     def __init__(self, calibrateOdrive = True):
         super().__init__('driver')
@@ -138,38 +135,6 @@ class driver(Node):
             pass
         self.sail = obj_sail()
         self.rudder = obj_rudder()
-
-        self.driver_subscription = self.create_subscription(String, 'driver', self.ROS_Callback, 10)
-
-    def ROS_Callback(self, string):
-        # string = (driver:sail/rudder:{targetAngle})
-        resolved = False
-        args = string.data.replace('(', '').replace(')', "").split(":")
-        if args[0] == 'driver':
-            if args[1] == 'sail':
-                self.sail.set(float(args[2]))
-                resolved = True
-            elif args[1] == 'rudder':
-                self.rudder.set(float(args[2]))
-                resolved = True
-
-        if not resolved:
-            print(F"driver failed to resolve command: {string.data}, parsed to {args}")
-
-
-def main(args = None):
-    rclpy.init(args=args)
-    drv = driver()
-    try:
-        rclpy.spin(drv)
-    except Exception as e:
-        print(F"exception rased in driver {e}")
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    print("Destroying driver node")
-    drv.destroy_node()
-    rclpy.shutdown()
 
 if __name__ == "__main__":
     #manually control motors with commands 'sail {value}' and 'rudder {value}'
