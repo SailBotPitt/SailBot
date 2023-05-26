@@ -17,7 +17,7 @@ except:
     from sailbot.windvane import windVane
 
 from threading import Thread
-from RPi import GPIOs
+from RPi import GPIO
 from time import sleep
 
 
