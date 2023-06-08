@@ -216,7 +216,8 @@ class boat(Node):
                 self.adjustRudder(self.targetRudder)
                     
 
-            if not self.manualControl:  # set mode for automation
+            else:  # set mode for automation
+                continue # automation code crashes so skip until fixed
                 if self.MODE_SETTING == c.config['MODES']['MOD_COLLISION_AVOID']:
                     logging.info("Received message to Automate: COLLISION_AVOIDANCE")
                     self.eevee = events.Collision_Avoidance(self.event_arr)
@@ -315,7 +316,6 @@ class boat(Node):
         
         self.arduino.send("DATA: " + totstr)
 
-
     def readMessages(self, msgOR=None):
         """ 
         Read messages from transceiver
@@ -329,8 +329,10 @@ class boat(Node):
 
         try:
             for msg in msgs:
+                # print(F"msg {msg[0]}")
                 processed = False # to track if we processed the message, if not we can handle an invalid message
                 ary = msg.split(" ")
+                # print(F"ary: {ary}")
                 #make it so you cant do manual commands unless in RC mode to avoid automation undoing work done
                 #override is in place to switch to RC if given RC commands if potential accidents may happen
                 if len(ary) > 0:
@@ -349,6 +351,7 @@ class boat(Node):
                             logging.info("Refuse to change sail, not in RC Mode")
 
                         # manual adjust rudder
+
                     elif ary[0] == 'rudder' or ary[0] == "R":
                         if self.override:
                             logging.info("OVERRIDE: Switching to RC")
@@ -369,6 +372,23 @@ class boat(Node):
                         else:
                             logging.info("Refuse to change sail, not in RC Mode")
 
+                    elif str(ary[0]) == 'sailOffset' or ary[0] == 'SO':
+                        self.manualControl = True
+                        dataStr = String()
+                        dataStr.data = F"(driverOffset:sail:{float(ary[1])})"
+                        self.get_logger().info(dataStr.data)
+                        self.pub.publish(dataStr)
+
+                    elif str(ary[0]) == 'rudderOffset' or ary[0] == 'RO':
+                        self.manualControl = True
+                        dataStr = String()
+                        dataStr.data = F"(driverOffset:rudder:{float(ary[1])})"
+                        self.get_logger().info(dataStr.data)
+                        self.pub.publish(dataStr)
+
+                    elif ary[0] == 'controlOff':
+                        self.manualControl = False
+                        self.override = False
 
                     elif ary[0] == 'override':
                         self.override = not self.override
@@ -424,9 +444,6 @@ class boat(Node):
             x = [letter for letter in msgs]
             #print(ary, msgs, x)
             
-
-
-
     def goBetweenBuoy(self, LeftBuoyPixel, RightBuoyPixel):
         # Both in camera, assuming arguments = none if not in camera
         if LeftBuoyPixel and RightBuoyPixel:

@@ -47,6 +47,7 @@ class obj_sail:
     def __init__(self, auto = False):
         self.autoAdjust = auto
         self.current = 0
+        self.offset = 0
         if USE_STEPPER_SAIL:
             self.step = stepper.stepperDriver(SAIL_DIR_PIN, SAIL_PUL_PIN)
         if USE_ODRIVE_SAIL:
@@ -59,9 +60,12 @@ class obj_sail:
         x = min(max(x, min1), max1)
         return min2 + (max2-min2)*((x-min1)/(max1-min1))
 
-    def set(self, degrees):
+    def set(self, degrees, force = False):
         print(F"setting sail: {degrees}")
         degrees = float(degrees)
+
+        if not force and abs(degrees - self.current) < 3:
+            return
 
         if USE_STEPPER_SAIL:
             self.steps = int(400/360 * (self.current-degrees) ) * 15
@@ -73,7 +77,7 @@ class obj_sail:
 
         if USE_ODRIVE_SAIL:
             val = self.map(degrees, 0, 90, 0, float(c.config['ODRIVE']['odriveSailRotations']))
-            DRV.posSet(self.odriveAxis, val)
+            DRV.posSet(self.odriveAxis, val + self.offset)
         self.current = degrees
     
     def autoAdjustSail(self):
@@ -91,6 +95,7 @@ class obj_rudder:
     #between -45 and 45 degrees
     def __init__(self):
         self.current = 0
+        self.offset = 0
         if USE_STEPPER_RUDDER:
             self.step = stepper.stepperDriver(RUDDER_DIR_PIN, RUDDER_PUL_PIN)
         if USE_ODRIVE_RUDDER:
@@ -104,9 +109,12 @@ class obj_rudder:
             x = min(max(x, min1), max1)
         return min2 + (max2-min2)*((x-min1)/(max1-min1))
     
-    def set(self, degrees):
+    def set(self, degrees, force = False):
         print(F"setting rudder: {degrees}")
         degrees = float(degrees)
+
+        if not force and abs(degrees - self.current) < 3:
+            return
         
         if USE_STEPPER_RUDDER:
             maxAngle = 30
@@ -123,14 +131,14 @@ class obj_rudder:
 
         if USE_ODRIVE_RUDDER:
             val = self.map(degrees, float(c.config['CONSTANTS']['rudder_angle_min']), float(c.config['CONSTANTS']['rudder_angle_max']), -float(c.config['ODRIVE']['odriveRudderRotations'])/2, float(c.config['ODRIVE']['odriveRudderRotations'])/2)
-            DRV.posSet(self.odriveAxis, val)
-            #print(F"set rudder to {val} {degrees}")
+            DRV.posSet(self.odriveAxis, val + self.offset)
+            print(F"set rudder to {val} {degrees + self.offset}")
 
         self.current = degrees
 
 class driver(Node):
 
-    def __init__(self, calibrateOdrive = True):
+    def __init__(self, calibrateOdrive = False):
         super().__init__('driver')
         global DRV
         if USE_ODRIVE_SAIL or USE_ODRIVE_RUDDER:
@@ -143,6 +151,7 @@ class driver(Node):
 
     def ROS_Callback(self, string):
         # string = (driver:sail/rudder:{targetAngle})
+        print(F"driver callback {string}")
         resolved = False
         args = string.data.replace('(', '').replace(')', "").split(":")
         if args[0] == 'driver':
@@ -151,6 +160,17 @@ class driver(Node):
                 resolved = True
             elif args[1] == 'rudder':
                 self.rudder.set(float(args[2]))
+                resolved = True
+
+        elif args[0] == 'driverOffset':
+            if args[1] == 'sail':
+                self.sail.offset = float(args[2])
+                self.sail.set(self.sail.current, force=True)
+                print(F"Sail offset = {self.sail.offset}")
+                resolved = True
+            elif args[1] == 'rudder':
+                self.rudder.offset = float(args[2])
+                self.rudder.set(self.rudder.current, force=True)
                 resolved = True
 
         if not resolved:

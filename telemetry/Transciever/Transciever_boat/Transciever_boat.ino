@@ -72,6 +72,11 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 int rudderVal = 0;
 int sailVal = 0;
+
+byte PWM_PIN_1 = 6;
+byte PWM_PIN_2 = 9;
+byte PWM_PIN_3 = 10;
+byte PWM_PIN_4 = 12;
  
 void setup() 
 {
@@ -137,11 +142,11 @@ void loop()
       returnData();
     }
     //Serial.print("Sending "); Serial.println(radiopacket);
-    //radiopacket[19] = 0;
+    // radiopacket[19] = 0;
     
-    //Serial.println("Sending...");
     else{
       delay(10);
+      // Serial.println("Sending...");
       rf95.send((uint8_t *)radiopacket, 20);
     }
     
@@ -185,21 +190,42 @@ void loop()
       //Serial.print("RSSI: ");
       //Serial.println(rf95.lastRssi(), DEC);    
     }
-  else
-    {
-      //Serial.println("Receive failed");
-    }
+  // else
+  //   {
+  //     //Serial.println("Receive failed");
+  //   }
   /*}
-  else
-  {
-    Serial.println("No reply, is there a listener around?");
-  }*/
+  // else
+  // {
+  //  Serial.println("No reply, is there a listener around?");
+  //} */
  
 }
 
+int map(int x, int min1, int max1, int min2, int max2){
+  x = min(max(x, min1), max1);
+  float fx = x;
+  float fmin1 = min1;
+  float fmin2 = min2;
+  float fmax1 = max1;
+  float fmax2 = max2;
+  float val = fmin2 + (fmax2-fmin2)*((fx-fmin1)/(fmax1-fmin1));
+  return int(val);
+}
+
 void returnData(){
-  Serial.print("R "); Serial.print(rudderVal);
-  Serial.print(" S "); Serial.println(sailVal);
+  int readRudderVal = map(pulseIn(PWM_PIN_1, HIGH), 990, 1965, 0, 90);
+  int readSailVal = map(pulseIn(PWM_PIN_2, HIGH), 980, 1910, 0, 90); 
+  int readOffsetVal = map(pulseIn(PWM_PIN_3, HIGH), 970, 1960, 0, 90);
+  int readControlSwitchVal = map(pulseIn(PWM_PIN_4, HIGH), 970, 1960, 0, 90); 
+  Serial.print("R "); Serial.print(readRudderVal);
+  Serial.print(" S "); Serial.print(readSailVal);
+  Serial.print(" C "); Serial.print(readControlSwitchVal);
+  Serial.print(" O "); Serial.println(readOffsetVal);
+
+
+  // Serial.print("R "); Serial.print(rudderVal);
+  // Serial.print(" S "); Serial.println(sailVal);
   Serial.flush();
   
 }
