@@ -31,10 +31,10 @@ class CameraServos:
     PITCH_PORT = int(c.config["CAMERASERVOS"]["pitch_port"])
     YAW_PORT = int(c.config["CAMERASERVOS"]["yaw_port"])
 
-    IS_FLIPPED_PITCH = bool(c.config["CAMERA"]["reverse_pitch"])
+    # IS_FLIPPED_PITCH = bool(c.config["CAMERA"]["reverse_pitch"])
 
     def __init__(self):
-        self._kit = adafruit_servokit.ServoKit(channels=16)
+        self._kit = adafruit_servokit.ServoKit(channels=16)  # https://docs.circuitpython.org/projects/servokit/en/latest/api.html
         self._pitch = self.DEFAULT_ANGLE
         self._yaw = self.DEFAULT_ANGLE
 
@@ -46,8 +46,12 @@ class CameraServos:
 
     def reset(self):
         """Return camera servos to center"""
-        self.pitch = self.DEFAULT_ANGLE
-        self.yaw = self.DEFAULT_ANGLE
+        try:
+            self.pitch = self.DEFAULT_ANGLE
+            self.yaw = self.DEFAULT_ANGLE
+        except AttributeError as e:
+            print("Camera servo kit not found! Are the servos plugged in?")
+            raise e
 
     # ============ HERE BE DRAGONS ============
     # Python boilerplate for creating implicit setters and getters
@@ -63,8 +67,8 @@ class CameraServos:
         elif angle > self.MAX_ANGLE:
             angle = self.MAX_ANGLE
 
-        if self.IS_FLIPPED_PITCH:
-            angle = 180 - angle
+        # if self.IS_FLIPPED_PITCH:
+            # angle = 180 - angle
         logging.debug(f"Moving camera pitch to {angle}")
         self._kit.servo[self.PITCH_PORT].angle = angle
 

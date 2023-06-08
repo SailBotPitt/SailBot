@@ -1,4 +1,10 @@
 import sys
+import logging
+from time import sleep
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
 ROS = None
 try:
     import constants as c
@@ -8,9 +14,6 @@ except:
     import sailbot.constants as c
     import sailbot.boatMath as boatMath
     ROS = True
-import logging
-
-import math
 
 try:
     # try and load all the sensor libraries
@@ -31,30 +34,20 @@ try:
         from sailbot.windvane import windVane
         from sailbot.GPS import gps
         from sailbot.compass import compass
-        import sailbot.GPS as GPS
-        #from camera import camera
-        from sailbot.endurance import Endurance
-        from sailbot.stationKeeping import Station_Keeping
-        #import Precision_Navigation,Endurance,Station_Keeping,Search
         from sailbot.eventUtils import Waypoint, EventFinished
-
         from sailbot.drivers import driver
         from sailbot.transceiver import arduino
 
+        from sailbot.endurance import Endurance
+        from sailbot.precisionNavigation import Precision_Navigation
+        from sailbot.stationKeeping import Station_Keeping
+        from sailbot.search import Search
 except Exception as e:
     # if libraries fail give error message, and exit if this file is being run directly
     print("Failed to import some modules, if this is not a simulation fix this before continuing")
     print(F"Exception raised: {e}")
     if __name__ == '__main__':
         sys.exit(1)
-
-from datetime import date, datetime
-from threading import Thread
-from time import sleep
-import numpy
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
 
 events = {"RC": 0,
           "CA": 1,
@@ -121,8 +114,6 @@ class boat(Node):
         self.targetRudder = 0
         self.currentRudder = 0
 
-        tempTarget = False
-
         self.override = False   #whether to automatically switch to RC when inputting manual commands or prevent the commands
         self.MODE_SETTING = c.config['MODES']['MOD_RC']
         #pump_thread = Thread(target=self.pumpMessages)
@@ -137,15 +128,14 @@ class boat(Node):
                 logging.info("Received message to Automate: STATION_KEEPING")
                 self.eevee = Station_Keeping(self.event_arr,self.DEBUG_main)
 
-            
+
             elif self.MODE_SETTING == events["PN"]:
                 logging.info("Received message to Automate: PRECISION_NAVIGATE")
                 self.eevee = Precision_Navigation(self.event_arr,self.DEBUG_main)
-            '''
+
             elif self.MODE_SETTING == events["SE"]:
                 logging.info("Received message to Automate: SEARCH")
-                self.eevee = Search(self.event_arr,self.DEBUG_main)
-            '''
+                self.eevee = Search(self.event_arr)
 
         self.mainLoop()
         
@@ -239,8 +229,6 @@ class boat(Node):
         """
         Main loop that will run until boat is stopped 
         """
-        sailStep = 90
-        rudderStep = 90
         while True:
             self.readMessages() # read messages from transceiver   
 
@@ -249,41 +237,15 @@ class boat(Node):
                 self.adjustSail(self.targetSail)
                 self.adjustRudder(self.targetRudder)
 
-                '''if not self.currentTarget:
-                    # if we dont have a target GPS load the next target from the targets list
-                    if self.targets != []:
-                        self.currentTarget = self.targets.pop(0)
-                    else:
-                        print('no targets')
-                if self.currentTarget: 
-                    # go to target if we have one
-                    self.goToGPS(self.currentTarget[0], self.currentTarget[1])'''
             else:
-                #check for state to make new event obj
-                if self.eevee == None:
-                    if self.MODE_SETTING == events["ED"]:
-                        logging.info("Received message to Automate: ENDURANCE")
-                        self.eevee = Endurance(self.event_arr,self.DEBUG_main)
-
-                    elif self.MODE_SETTING == events["SK"]:
-                        logging.info("Received message to Automate: STATION_KEEPING")
-                        self.eevee = Station_Keeping(self.event_arr,self.DEBUG_main)
-
-                    
-                    elif self.MODE_SETTING == events["PN"]:
-                        logging.info("Received message to Automate: PRECISION_NAVIGATE")
-                        self.eevee = Precision_Navigation(self.event_arr,self.DEBUG_main)
-                    '''
-                    elif self.MODE_SETTING == events["SE"]:
-                        logging.info("Received message to Automate: SEARCH")
-                        self.eevee = Search(self.event_arr,self.DEBUG_main)
-                    '''
                 try:
                     waypoint = self.eevee.next_gps()
                     if waypoint is not None:
                         self.currentTarget[0], self.currentTarget[1] = waypoint.lat, waypoint.lon
-                        if self.DEBUG_main: print(self.currentTarget)
-                        else: self.goToGPS(self.currentTarget[0], self.currentTarget[1])
+                        if self.DEBUG_main:
+                            print(self.currentTarget)
+                        else:
+                            self.goToGPS(self.currentTarget[0], self.currentTarget[1])
                     else:
                         # Stop the boat
                         self.adjustSail(90)

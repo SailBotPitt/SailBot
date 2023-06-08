@@ -1,11 +1,17 @@
-from time import time
+import time
 import logging
 import math
 
-from eventUtils import Event, EventFinished, Waypoint
-
-import constants as c
+try:
+    import constants as c
+except ImportError:
+    import sailbot.constants as c
+    
 if c.config["MAIN"]["DEVICE"] == "pi":
+    from sailbot.eventUtils import EventFinished, Waypoint
+    from sailbot.GPS import gps
+else:
+    from eventUtils import EventFinished, Waypoint
     from GPS import gps
 
 """
@@ -31,24 +37,27 @@ if c.config["MAIN"]["DEVICE"] == "pi":
         - TODO write psuedocode about how this event logic works
 """
 
-REQUIRED_ARGS = 3
+REQUIRED_ARGS = 4
 
-class Precision_Navigation(Event):
+class Precision_Navigation:
     """
     Attributes:
         - event_info (array) - location of buoys to sail around
-            event_info = [(start_lat, start_long), (b1_lat, b1_long), (b2_lat, b2_long)]
+            event_info = [(Waypoint(start_left_lat, start_right_long), ...]
     """
     
     def __init__(self, event_info):
-        if (len(event_info) != REQUIRED_ARGS):
+        if len(event_info) != REQUIRED_ARGS:
             raise TypeError(f"Expected {REQUIRED_ARGS} arguments, got {len(event_info)}")
-        
-        super().__init__(event_info)
-        logging.info("Percision Navigation moment")
-        
-        
-        self.ifsideways = None; self.ifupsidedown = None    #set up for later PN_checkwayside
+        logging.info("Precision Navigation moment")
+
+        # EVENT INFO
+        self.event_info = event_info
+        self.start_left = event_info[0]
+        self.start_right = event_info[1]
+        self.buoy1 = event_info[2]
+        self.buoy2 = event_info[3]
+        self.start_time = time.time()
 
         self.PN_arr = []
         self.PN_arr = self.PN_coords()

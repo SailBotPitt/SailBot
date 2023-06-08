@@ -56,6 +56,18 @@ def angleBetweenCoordinates(lat1, lon1, lat2, lon2):
 
     return brng
 
+
+def calculate_compass_angle(pt1, pt2):
+    """Calculates the angle between two gps points"""
+    delta_lon = pt2.lon - pt1.lon
+    y = math.sin(math.radians(delta_lon)) * math.cos(math.radians(pt2.lat))
+    x = math.cos(math.radians(pt1.lat)) * math.sin(math.radians(pt2.lat)) - math.sin(
+        math.radians(pt1.lat)) * math.cos(math.radians(pt2.lat)) * math.cos(math.radians(delta_lon))
+    angle = math.atan2(y, x)
+    angle_deg = math.degrees(angle)
+    compass_angle = (angle_deg + 360) % 360
+    return compass_angle
+
 def angleToPoint(heading, lat1, long1, lat2, long2):
     phi = math.atan2(long1-long2, lat1-lat2)
 

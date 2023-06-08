@@ -1,6 +1,7 @@
 # reads values from config.ini and returns them
 import configparser
 import os
+import logging
 
 if os.path.isfile('config.ini'):
     prefix = ''
@@ -15,6 +16,12 @@ else:
 
 config = configparser.ConfigParser()
 config.read(F'{prefix}config.ini')
+
+logging.basicConfig(filename="log.log",
+                    filemode='a',
+                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=logging.DEBUG)
     
 def save():
     with open('../config.ini', 'w') as configfile:

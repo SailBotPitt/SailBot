@@ -1,12 +1,14 @@
 import logging
 import math
 import time
+import matplotlib.pyplot as plt
+
 
 import sailbot.constants as c
 from sailbot.eventUtils import Event, EventFinished, Waypoint, distance_between, has_reached_waypoint
-from sailbot.camera import Camera
-from sailbot.GPS import gps
-from sailbot.transceiver import arduino
+from camera import Camera
+from GPS import gps
+# from sailbot.transceiver import arduino
 
 """
 # Challenge	Goal:
@@ -62,7 +64,7 @@ class Search(Event):
             - Either 'SEARCHING', 'TRACKING', or 'RAMMING' the buoy
     """
 
-    def __init__(self, event_info):
+    def __init__(self, event_info=[Waypoint(0, 0), 100]):
         """
         Args:
             event_info (list[Waypoint(center_lat, center_long), radius]): center and radius of search circle
@@ -76,7 +78,8 @@ class Search(Event):
         self.search_center = event_info[0]
         self.search_radius = event_info[1]
         self.event_duration = 600
-        self.start_time = time.time()  # TODO: safe to assume event starts on instantiation?
+        self.start_time = time.time()
+        self.event_started = False
 
         # BOAT STATE
         self.waypoint_queue = self.create_search_pattern()
@@ -97,13 +100,13 @@ class Search(Event):
         self.tracking_abandon_threshold = int(c.config["SEARCH"]["tracking_abandon_threshold"])
 
         # When to switch from tracking to ramming mode and when to signal that the boat hit a buoy
-        self.ramming_distance = float(c.config["SEARCH"]["ramming_distance"])
+        self.ramming_distance = int(c.config["SEARCH"]["ramming_distance"])
         self.collision_sensitivity = float(c.config["SEARCH"]["collision_sensitivity"])
 
         # SENSORS
         self.camera = Camera()
         self.gps = gps()
-        self.transceiver = arduino(c.config['MAIN']['ardu_port'])
+        # self.transceiver = arduino(c.config['MAIN']['ardu_port']) TODO: unbug
 
     def next_gps(self):
         """
@@ -115,6 +118,15 @@ class Search(Event):
         """
 
         # Either no buoys found yet or boat is gathering more confidence before diverting course
+        if not self.event_started:
+            if has_reached_waypoint(self.search_center, distance=self.search_radius):
+                logging.info("Search event started!")
+                self.start_time = time.time()
+                self.waypoint_queue.pop(0)
+                self.state = "SEARCHING"
+            else:
+                return self.waypoint_queue[0]
+
         if self.state == "SEARCHING":
             # Capture panorama of surroundings
             imgs = self.camera.survey(num_images=3, context=True, detect=True)
@@ -155,7 +167,7 @@ class Search(Event):
         elif self.state == "TRACKING":
             distance_to_buoy = distance_between(self.gps, self.waypoint_queue[0])
 
-            if distance_to_buoy < 2:
+            if distance_to_buoy < self.ramming_distance:
                 # Boat is near the buoy, TIME TO RAM THAT SHIT
                 logging.info(f"TRACKING: {distance_to_buoy}m away from buoy! RAMMING TIME")
                 self.state = "RAMMING"
@@ -166,7 +178,7 @@ class Search(Event):
                     self.camera.focus(self.waypoint_queue[0])
                 except RuntimeError as e:
                     logging.warning(f"""TRACKING: Exception raised: {e}\n
-                    Camera can't focus on target!""")
+                    Camera can't focus on target! Going towards last know position!""")
                     return self.waypoint_queue[0]
 
                 frame = self.camera.capture(context=True, detect=True)

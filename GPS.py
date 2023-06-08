@@ -23,9 +23,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-from utils import singleton
-
-
+from sailbot.utils import singleton
 
 
 @singleton
@@ -46,7 +44,7 @@ class gps(Node):
 
         # for a computer, use the pyserial library for uart access
         import serial
-        self.latitude =  None
+        self.latitude = None
         self.longitude = None
         self.track_angle_deg = 0
         #self.uart = serial.Serial("/dev/ttyACM1", baudrate=9600, timeout=10)
