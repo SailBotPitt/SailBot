@@ -1,3 +1,8 @@
+# Pitt Contributors go [here!](https://github.com/PittSailbot/Sailbot)
+Development has moved to a private repository. No more snooping on our tricks for next year >:). 
+
+However, Pitt will release the entirety of our code after each competition for fairness, learning and transparency. Refer to the license for what y'all can do with it. 
+
 # SailBot
 Main codebase for the University of Pittsburgh's SailBot Club (2019-23)
 
